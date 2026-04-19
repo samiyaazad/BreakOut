@@ -20,6 +20,74 @@ I made this BreakOut game using HTML, CSS & JavaScript. It is a  part of my chil
             - Track score in real-time
 
 
+## NEW FEATURES
+
+                1. Level System
+                                >The game now progresses automatically
+                                >Blocks increase with each level
+                                >Ball speed increases
+
+                         => Before: one static level
+                         => Now: infinite progression system
+
+                2. Lives System
+                                >You don’t lose instantly anymore
+                                >Ball resets after each miss
+                                >Game ends only when lives = 0
+                                >Fixed negative lives bug
+
+                         => Before: instant game over
+                         => Now: actual gameplay loop
+
+                3. Start + Pause System
+                                >ENTER → start game
+                                >P → pause/resume
+                                >Game doesn’t run in background anymore
+
+                         => Before: game runs immediately
+                         => Now: controlled flow like real games
+
+                4. High Score System
+                                >Uses localStorage
+                                >Saves the best score even after refresh
+                                >Updates only when beaten
+
+                         => Before: score resets always
+                         => Now: persistent progress
+
+                5. Background System
+                                >Gradient background added
+                                >Replaced plain black screen
+
+                         => Before: static black
+                         => Now: visually styled game
+
+                6. Fixed Lives Going Negative
+                                >Prevented multiple frame hits
+                                >Added proper life handling logic
+                                
+                7. Fixed Game Flow Order
+                                >Start → Pause → Game → Game Over handled correctly
+                                >Prevented update loop bugs
+                                
+                8. Removed Rendering Conflicts
+                                >Removed duplicate clearRect()
+                                >Fixed background flickering
+                                
+                9. Fixed Critical Typos
+                
+                10. HUD (Score UI) Improved
+                                >Score, Level, Lives, High Score aligned properly
+                                >No more text going outside canvas
+                                
+                                   GAME STRUCTURE IMPROVED
+                => game now has:
+
+                                >Proper game states (start/pause / game over)
+                                >Separated logic (update/draw/helpers)
+                                >Cleaner flow
+                                >Better readability
+
 ## KEYBOARD SHORTCUTS
 
                      => ← Arrow Left → Move paddle left
