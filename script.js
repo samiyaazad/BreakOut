@@ -49,6 +49,11 @@ let blockY = 45;
 
 let score = 0;
 let gameOver = false;
+let level = 1;
+let lives = 3; 
+let gameStarted = false;
+let paused = false;
+let highScore = parseInt(localStorage.getItem("highScore")) || 0;
 
 
 window.onload = function() {
@@ -57,12 +62,16 @@ window.onload = function() {
     board.width = boardWidth;
     context = board.getContext("2d"); 
 
+    document.addEventListener("keydown",movePlayer);
     
     context.fillStyle="skyblue";
     context.fillRect(player.x, player.y, player.width, player.height);
 
     requestAnimationFrame(update);
-    document.addEventListener("keydown", movePlayer);
+    document.addEventListener("keydown", (e) => {
+        if (e.code === "Enter") gameStarted = true;
+        if (e.code === "KeyP") paused = !paused;
+    });
 
     
     createBlocks();
@@ -71,11 +80,43 @@ window.onload = function() {
 
 function update() {
     requestAnimationFrame(update);
-    
-    if (gameOver) {
+
+    let gradient = context.createLinearGradient(0, 0, 0, board.height);
+    gradient.addColorStop(0, "#000814");
+    gradient.addColorStop(1, "#001d3d");
+
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, board.width, board.height);
+
+    for (let i = 0; i < 30; i++) {
+    context.fillStyle = "rgba(255, 255, 255, 0.3)";
+    context.fillRect(
+        Math.random() * boardWidth,
+        Math.random() * boardHeight,
+        2,
+        2
+    );
+    }
+
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("highScore", highScore);
+    }
+
+    if (!gameStarted) {
+        drawStartScreen();
         return;
     }
-    context.clearRect(0, 0, board.width, board.height);
+
+    if (paused) {
+        drawPauseScreen();
+        return;
+    }
+
+    if (gameOver) {
+        drawGameOver();
+        return;
+    }
 
 
     context.fillStyle = "lightgreen";
@@ -87,11 +128,17 @@ function update() {
     context.fillRect(ball.x, ball.y, ball.width, ball.height);
 
     
-    if (topCollision(ball, player) || bottomCollision(ball, player)) {
-        ball.velocityY *= -1;   
-    }
-    else if (leftCollision(ball, player) || rightCollision(ball, player)) {
-        ball.velocityX *= -1;   
+    if (detectCollision(ball, player)) {
+        let collidePoint = (ball.x + ball.width / 2) - (player.x + player.width / 2);
+
+        collidePoint = collidePoint / (player.width / 2); 
+
+        let angle = collidePoint * Math.PI / 3;
+
+        let speed = Math.sqrt(ball.velocityX ** 2 + ball.velocityY ** 2);
+
+        ball.velocityX = speed * Math.sin(angle);
+        ball.velocityY = -speed * Math.cos(angle);
     }
 
     if (ball.y <= 0) { 
@@ -103,9 +150,17 @@ function update() {
         ball.velocityX *= -1; 
     }
     else if (ball.y + ball.height >= boardHeight) {
-        context.font = "20px sans-serif";
-        context.fillText("Game Over: Press 'Space' to Restart", 80, 400);
-        gameOver = true;
+        lives-- ;
+        if (lives <= 0) {
+            gameOver = true;
+
+            let storedHigh = localStorage.getItem("highScore") || 0;
+            if (score > storedHigh) {
+                localStorage.setItem("highScore",score);
+            }
+        } else {
+            resetBall();
+        }
     }
 
     
@@ -131,19 +186,34 @@ function update() {
 
 
     if (blockCount == 0) {
-        score += 100*blockRows*blockColumns; 
+        level++ ;
+
+        score += 100 * blockRows * blockColumns;
+
         blockRows = Math.min(blockRows + 1, blockMaxRows);
+
+        ball.velocityX *= 1.1;
+        ball.velocityY *= 1.1;
+
+        player.width = Math.max(40, player.width - 5);
+
         createBlocks();
     }
 
 
-    context.font = "20px sans-serif";
-    context.fillText(score, 10, 25);
+        context.font = "16px sans-serif";
+        context.fillStyle = "white";
+        context.textAlign = "center";
+
+        context.fillText("Score: " + score, boardWidth * 0.125, 25);
+        context.fillText("Level: " + level, boardWidth * 0.375, 25);
+        context.fillText("Lives: " + lives, boardWidth * 0.625, 25);
+        context.fillText("High: " + highScore, boardWidth * 0.875, 25);
 }
 
 
 function outOfBounds(xPosition) {
-    return (xPosition < 0 || xPosition + playerWidth > boardWidth);
+    return (xPosition < 0 || xPosition + player.width > boardWidth);
 }
 
 
@@ -218,6 +288,19 @@ function createBlocks() {
 }
 
 
+function resetBall() {
+    ball.x = boardWidth / 2;
+    ball.y = boardHeight / 2;
+    ball.velocityX = 0;
+    ball.velocityY = 0;
+
+    setTimeout(() => {
+        ball.velocityX = ballVelocityX;
+        ball.velocityY = ballVelocityY;
+    }, 1000);
+}
+
+
 function resetGame() {
     gameOver = false;
     player = {
@@ -239,5 +322,44 @@ function resetGame() {
     blockRows = 3;
     score = 0;
 
+    lives = 3;
+    level = 1;
+    player.width = playerWidth;
+    gameStarted = false;
+    paused = false;
+
     createBlocks();
+}
+
+
+function drawStartScreen() {
+    context.fillStyle = "white";
+    context.font = "20px sans-serif";
+    context.textAlign = "center";
+    context.fillText("Press ENTER to Start", boardWidth / 2, boardHeight / 2);
+}
+
+
+function drawPauseScreen() {
+    context.fillStyle ="white";
+    context.font = "20px sans-serif";
+    context.textAlign = "center";
+    context.fillText("Paused - Press P to Resume", boardWidth / 2, boardHeight / 2);
+}
+
+
+function drawGameOver() {
+    context.fillStyle = "rgba(0, 0, 0, 0.7)";
+    context.fillRect(0, 0, boardWidth, boardHeight);
+
+    context.fillStyle = "white";
+    context.font = "28px sans-serif";
+    context.textAlign = "center";
+
+    context.fillText("GAME OVER", boardWidth / 2, boardHeight / 2 - 40);
+    context.fillText("Score: " + score, boardWidth / 2, boardHeight / 2);
+    context.fillText("HIGH SCORE: " + highScore, boardWidth / 2, boardHeight / 2 + 40);
+
+    context.font = "16px sans-serif";
+    context.fillText("Press Restart Button", boardWidth / 2, boardHeight / 2 + 80);
 }
